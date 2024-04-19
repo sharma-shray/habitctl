@@ -292,7 +292,7 @@ impl HabitCtl {
 
             for habit in self.get_todo(&current) {
                 self.print_habit_row(&habit, log_from, current.clone());
-                let l = format!("[y/n/s/⏎] ");
+                let l = "[y/n/s/⏎] ".to_string();
 
                 let mut value;
                 loop {
@@ -304,9 +304,9 @@ impl HabitCtl {
                     }
                 }
 
-                if value != "" {
+                if !value.is_empty() {
                     self.entry(&Entry {
-                        date: current.clone(),
+                        date: current,
                         habit: habit.name,
                         value,
                     });
@@ -362,7 +362,7 @@ impl HabitCtl {
 
         for line in file.lines() {
             let l = line.unwrap();
-            if l == "" {
+            if l.is_empty() {
                 continue;
             }
             let split = l.split('\t');
@@ -388,20 +388,20 @@ impl HabitCtl {
     }
 
     fn day_status(&self, habit: &Habit, date: &NaiveDate) -> DayStatus {
-        if let Some(entry) = self.get_entry(&date, &habit.name) {
+        if let Some(entry) = self.get_entry(date, &habit.name) {
             if entry.value == "y" {
                 DayStatus::Done
             } else if entry.value == "s" {
                 DayStatus::Skipped
-            } else if self.habit_satisfied(habit, &date) {
+            } else if self.habit_satisfied(habit, date) {
                 DayStatus::Satisfied
-            } else if self.habit_skipified(habit, &date) {
+            } else if self.habit_skipified(habit, date) {
                 DayStatus::Skipified
             } else {
                 DayStatus::NotDone
             }
         } else {
-            if self.habit_warning(habit, &date) {
+            if self.habit_warning(habit, date) {
                 DayStatus::Warning
             } else {
             DayStatus::Unknown
@@ -508,13 +508,13 @@ impl HabitCtl {
     fn first_date(&self) -> Option<NaiveDate> {
         self.get_entries()
             .first()
-            .and_then(|entry| Some(entry.date.clone()))
+            .and_then(|entry| Some(entry.date))
     }
 
     fn last_date(&self) -> Option<NaiveDate> {
         self.get_entries()
             .last()
-            .and_then(|entry| Some(entry.date.clone()))
+            .and_then(|entry| Some(entry.date))
     }
 
     fn get_score(&self, score_date: &NaiveDate) -> f32 {
@@ -529,7 +529,7 @@ impl HabitCtl {
             .habits
             .iter()
             .map(|habit| {
-                let status = self.day_status(&habit, &score_date);
+                let status = self.day_status(habit, score_date);
                 habit.every_days > 0
                     && (status == DayStatus::Done || status == DayStatus::Satisfied)
             })
@@ -540,7 +540,7 @@ impl HabitCtl {
             .habits
             .iter()
             .map(|habit| {
-                let status = self.day_status(&habit, &score_date);
+                let status = self.day_status(habit, score_date);
                 habit.every_days > 0
                     && (status == DayStatus::Skipped || status == DayStatus::Skipified)
             })
